@@ -41,7 +41,7 @@ def login_user(request):
                 return Response({'error': 'Пользователь не найден'}, status=status.HTTP_404_NOT_FOUND)
 
             if user.check_password(raw_password=password):
-                return Response({'message': 'Вход выполнен успешно', 'user_id': user.username + str(user.id)})
+                return Response({'message': 'Вход выполнен успешно', 'user_id': user.id})
             else:
                 return Response({'error': 'Неверный пароль'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

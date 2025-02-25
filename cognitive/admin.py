@@ -1,15 +1,74 @@
 from django.contrib import admin
+from django.http import HttpResponse
+import csv
+import openpyxl
 from .models import User, TestNSI, TestResult
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'age', 'education', 'speciality')
+    actions = ['export_as_csv', 'export_as_xlsx']
+
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
+        writer = csv.writer(response)
+        writer.writerow(field_names)
+        for obj in queryset:
+            writer.writerow([getattr(obj, field) for field in field_names])
+        return response
+
+    def export_as_xlsx(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename={meta}.xlsx'
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(field_names)
+        for obj in queryset:
+            ws.append([getattr(obj, field) for field in field_names])
+        wb.save(response)
+        return response
+
+    export_as_csv.short_description = "Export Selected as CSV"
+    export_as_xlsx.short_description = "Export Selected as XLSX"
 
 
 @admin.register(TestNSI)
 class TestNSIAdmin(admin.ModelAdmin):
     list_display = ('test_name', 'title_all', 'title_correct')
+    actions = ['export_as_csv', 'export_as_xlsx']
+
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
+        writer = csv.writer(response)
+        writer.writerow(field_names)
+        for obj in queryset:
+            writer.writerow([getattr(obj, field) for field in field_names])
+        return response
+
+    def export_as_xlsx(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename={meta}.xlsx'
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(field_names)
+        for obj in queryset:
+            ws.append([getattr(obj, field) for field in field_names])
+        wb.save(response)
+        return response
+
+    export_as_csv.short_description = "Export Selected as CSV"
+    export_as_xlsx.short_description = "Export Selected as XLSX"
 
 
 @admin.register(TestResult)
@@ -18,26 +77,26 @@ class TestResultAdmin(admin.ModelAdmin):
     actions = ['export_as_csv', 'export_as_xlsx']
 
     def export_as_csv(self, request, queryset):
-        import csv
-        from django.http import HttpResponse
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="test_results.csv"'
+        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
         writer = csv.writer(response)
-        writer.writerow(['User', 'Test', 'Try Number', 'Accuracy'])
-        for result in queryset:
-            writer.writerow([result.user.username, result.test.test_name, result.try_number, result.accuracy])
+        writer.writerow(field_names)
+        for obj in queryset:
+            writer.writerow([getattr(obj, field) for field in field_names])
         return response
 
     def export_as_xlsx(self, request, queryset):
-        import openpyxl
-        from django.http import HttpResponse
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="test_results.xlsx"'
+        response['Content-Disposition'] = f'attachment; filename={meta}.xlsx'
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(['User', 'Test', 'Try Number', 'Accuracy'])
-        for result in queryset:
-            ws.append([result.user.username, result.test.test_name, result.try_number, result.accuracy])
+        ws.append(field_names)
+        for obj in queryset:
+            ws.append([getattr(obj, field) for field in field_names])
         wb.save(response)
         return response
 
