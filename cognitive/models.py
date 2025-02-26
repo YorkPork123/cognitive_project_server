@@ -50,3 +50,15 @@ class TestResult(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.test.test_name}"
+
+
+class Attempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Связь с пользователем
+    test = models.ForeignKey(TestNSI, on_delete=models.CASCADE)  # Связь с тестом
+    try_count = models.PositiveIntegerField(default=0)  # Количество попыток
+
+    class Meta:
+        unique_together = ('user', 'test')  # Уникальная пара user и test
+
+    def __str__(self):
+        return f"{self.user.username} - {self.test.test_name} - Попыток: {self.try_count}"

@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from cognitive import views
+from cognitive.views import UpdateAttemptView, GetAttemptView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/register/', views.register_user, name='register_user'),
     path('api/save_test_result/', views.save_test_result, name='save_test_result'),
     path('api/login/', views.login_user, name='login_user'),
+    path('update-attempt/', UpdateAttemptView.as_view(), name='update-attempt'),
+    path('get-attempt/', GetAttemptView.as_view(), name='get-attempt'),
 ]

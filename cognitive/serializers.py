@@ -1,6 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from .models import User, TestNSI, TestResult
+from .models import User, TestNSI, TestResult, Attempt
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -41,3 +41,9 @@ class TestResultSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
+
+
+class AttemptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attempt
+        fields = ['id', 'user', 'test', 'try_count']
