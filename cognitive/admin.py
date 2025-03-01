@@ -105,23 +105,36 @@ class UserAdmin(admin.ModelAdmin):
                 user.lead_hand, user.diseases, user.smoking, user.alcohol, user.sport, user.insomnia,
                 user.current_health, user.gaming
             ]
-            # Считаем общее количество попыток для пользователя
-            total_attempts = sum(Attempt.objects.filter(user=user).values_list('try_count', flat=True))
-            if total_attempts == 0:
-                total_attempts = 1  # Минимум одна строка, даже если попыток нет
 
-            # Записываем данные пользователя
-            for col_idx, value in enumerate(user_data, start=1):
-                # Объединяем ячейки для информации о пользователе (столбцы 1-15)
-                ws.merge_cells(start_row=row_idx, start_column=col_idx, end_row=row_idx + total_attempts - 1,
-                               end_column=col_idx)
-                ws.cell(row=row_idx, column=col_idx, value=value)
-
-            # Записываем результаты тестов
+            # Получаем все попытки для пользователя
+            all_results = []
             for test in tests:
-                results = TestResult.objects.filter(user=user, test=test)
-                if results.exists():
-                    for result in results:
+                results = TestResult.objects.filter(user=user, test=test).order_by('id')  # Сортируем по id
+                all_results.append(results)
+
+            # Определяем максимальное количество попыток среди всех тестов
+            max_attempts = max(len(results) for results in all_results) if any(all_results) else 1
+
+            # Если у пользователя нет попыток, добавляем одну строку с его данными
+            if max_attempts == 0:
+                max_attempts = 1
+
+            # Записываем данные для каждой попытки
+            for attempt_num in range(max_attempts):
+                # Записываем данные пользователя (объединяем ячейки для всех попыток)
+                if attempt_num == 0:
+                    for col_idx, value in enumerate(user_data, start=1):
+                        ws.merge_cells(start_row=row_idx, start_column=col_idx, end_row=row_idx + max_attempts - 1,
+                                       end_column=col_idx)
+                        ws.cell(row=row_idx, column=col_idx, value=value)
+
+                # Записываем результаты тестов для текущей попытки
+                for test_idx, test in enumerate(tests):
+                    results = all_results[test_idx]
+                    if attempt_num < len(results):
+                        result = results[attempt_num]
+                        # Обновляем значение try_number на корректный номер попытки
+                        result.try_number = attempt_num + 1
                         # Записываем результаты теста
                         test_info = test_columns[test.test_id]
                         for i, field in enumerate(test_info['fields']):
@@ -130,14 +143,14 @@ class UserAdmin(admin.ModelAdmin):
                             if field == 'complete_time' and value is not None:
                                 value = value.replace(tzinfo=None)
                             ws.cell(row=row_idx, column=test_info['start_col'] + i, value=value)
-                        # Переходим на следующую строку для следующей попытки
-                        row_idx += 1
-                else:
-                    # Если нет результатов, оставляем пустые ячейки
-                    for i in range(len(test_columns[test.test_id]['fields'])):
-                        ws.cell(row=row_idx, column=test_columns[test.test_id]['start_col'] + i, value='')
-                    # Переходим на следующую строку
-                    row_idx += 1
+                    else:
+                        # Если попыток меньше, оставляем пустые ячейки
+                        test_info = test_columns[test.test_id]
+                        for i in range(len(test_info['fields'])):
+                            ws.cell(row=row_idx, column=test_info['start_col'] + i, value='')
+
+                # Переходим на следующую строку для следующей попытки
+                row_idx += 1
 
         wb.save(response)
         return response
